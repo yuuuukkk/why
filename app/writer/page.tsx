@@ -6,7 +6,10 @@ import { WriterSidebar } from "@/features/writer/writer-sidebar"
 import { PromptEditor } from "@/features/writer/prompt-editor"
 import { ResultPanel } from "@/features/writer/result-panel"
 import { HistoryPanel } from "@/features/writer/history-panel"
+import { CreateProjectModal } from "@/features/writer/create-project-modal"
+import { GenerationSettingsPanel } from "@/features/writer/generation-settings"
 import { useHistory } from "@/features/writer/history"
+import { useProjects, useGenerationSettings } from "@/features/writer/project-store"
 import { getMockResult } from "@/features/writer/mock-data"
 import type { WriterCategory, GeneratedContent, HistoryEntry } from "@/features/writer/types"
 
@@ -16,19 +19,34 @@ export default function WriterPage() {
   const [result, setResult] = React.useState<GeneratedContent | null>(null)
   const [isLoading, setIsLoading] = React.useState(false)
   const [showHistory, setShowHistory] = React.useState(false)
+  const [showCreateProject, setShowCreateProject] = React.useState(false)
+  const [showSettings, setShowSettings] = React.useState(false)
 
+  const projects = useProjects()
+  const settings = useGenerationSettings()
   const history = useHistory()
 
   const handleGenerate = React.useCallback(() => {
     if (!prompt.trim()) return
     setIsLoading(true)
     setTimeout(() => {
-      const generated = getMockResult(activeCategory, prompt)
+      const generated = getMockResult(
+        activeCategory,
+        prompt,
+        projects.activeProject
+          ? {
+              name: projects.activeProject.name,
+              gameType: projects.activeProject.gameType,
+              worldDescription: projects.activeProject.worldDescription,
+              style: projects.activeProject.style,
+            }
+          : null
+      )
       setResult(generated)
-      history.add(activeCategory, prompt, generated)
+      history.add(activeCategory, prompt, generated, projects.activeProjectId ?? undefined)
       setIsLoading(false)
     }, 800)
-  }, [prompt, activeCategory, history])
+  }, [prompt, activeCategory, projects.activeProject, projects.activeProjectId, history])
 
   const handleHistorySelect = React.useCallback((entry: HistoryEntry) => {
     setActiveCategory(entry.category)
@@ -52,7 +70,7 @@ export default function WriterPage() {
     <div className="flex h-screen flex-col overflow-hidden">
       <Header />
       <div className="flex flex-1 overflow-hidden pt-[72px]">
-        {/* Sidebar - hidden on mobile */}
+        {/* Sidebar */}
         <div className="hidden md:block">
           <WriterSidebar
             activeCategory={activeCategory}
@@ -62,10 +80,15 @@ export default function WriterPage() {
             }}
             showHistory={showHistory}
             onToggleHistory={() => setShowHistory((s) => !s)}
+            activeProject={projects.activeProject}
+            projects={projects.projects}
+            onSwitchProject={projects.setActive}
+            onOpenCreateProject={() => setShowCreateProject(true)}
+            onOpenSettings={() => setShowSettings(true)}
           />
         </div>
 
-        {/* Mobile category tabs */}
+        {/* Mobile tabs */}
         <div className="flex md:hidden h-10 border-b border-white/[0.06] bg-[#0c0c10] overflow-x-auto px-3 gap-1 items-center">
           {["story","dialogue","quest","character","item","skill"].map((cat) => (
             <button
@@ -101,7 +124,6 @@ export default function WriterPage() {
           isLoading={isLoading}
         />
 
-        {/* Result / History panel */}
         <div className="hidden lg:block">
           {activePanel}
         </div>
@@ -116,6 +138,23 @@ export default function WriterPage() {
           </div>
         </div>
       )}
+
+      {/* Create Project Modal */}
+      <CreateProjectModal
+        open={showCreateProject}
+        onClose={() => setShowCreateProject(false)}
+        onCreate={(name, gameType, worldDescription, style) => {
+          projects.create(name, gameType, worldDescription, style)
+        }}
+      />
+
+      {/* Generation Settings */}
+      <GenerationSettingsPanel
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+        settings={settings.settings}
+        onChange={settings.setSettings}
+      />
     </div>
   )
 }

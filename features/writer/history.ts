@@ -23,7 +23,8 @@ function saveHistory(entries: HistoryEntry[]) {
 export function addHistoryEntry(
   category: WriterCategory,
   prompt: string,
-  result: GeneratedContent
+  result: GeneratedContent,
+  projectId?: string
 ): HistoryEntry {
   const entry: HistoryEntry = {
     id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -31,6 +32,7 @@ export function addHistoryEntry(
     category,
     prompt,
     result,
+    projectId,
   }
   const existing = loadHistory()
   const updated = [entry, ...existing].slice(0, 50)
@@ -65,8 +67,8 @@ export function useHistory() {
   }, [])
 
   const add = React.useCallback(
-    (category: WriterCategory, prompt: string, result: GeneratedContent) => {
-      const entry = addHistoryEntry(category, prompt, result)
+    (category: WriterCategory, prompt: string, result: GeneratedContent, projectId?: string) => {
+      const entry = addHistoryEntry(category, prompt, result, projectId)
       setEntries((prev) => [entry, ...prev].slice(0, 50))
       return entry
     },

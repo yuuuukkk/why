@@ -268,21 +268,56 @@ function pickVariant<T>(prompt: string, variants: T[]): T {
   return variants[hash % variants.length]
 }
 
-export function getMockResult(category: WriterCategory, prompt: string): GeneratedContent {
+function injectProjectContext(result: GeneratedContent, project?: { name: string; gameType: string; worldDescription: string; style: string } | null): GeneratedContent {
+  if (!project) return result
+  const contextSection = {
+    heading: "Project Context",
+    body: `Project: ${project.name} | Type: ${project.gameType || "N/A"} | Style: ${project.style || "N/A"}`,
+  }
+  const worldSection = project.worldDescription
+    ? {
+        heading: "World Reference",
+        body: project.worldDescription.slice(0, 300) + (project.worldDescription.length > 300 ? "..." : ""),
+      }
+    : null
+
+  return {
+    ...result,
+    sections: [
+      contextSection,
+      ...(worldSection ? [worldSection] : []),
+      ...result.sections,
+    ],
+  }
+}
+
+export function getMockResult(
+  category: WriterCategory,
+  prompt: string,
+  project?: { name: string; gameType: string; worldDescription: string; style: string } | null
+): GeneratedContent {
+  let result: GeneratedContent
   switch (category) {
     case "story":
-      return pickVariant(prompt, [storyVillage, storyDungeon, storyKingdom])
+      result = pickVariant(prompt, [storyVillage, storyDungeon, storyKingdom])
+      break
     case "dialogue":
-      return pickVariant(prompt, [dialogueElder, dialogueBoss, dialogueMerchant])
+      result = pickVariant(prompt, [dialogueElder, dialogueBoss, dialogueMerchant])
+      break
     case "quest":
-      return pickVariant(prompt, [questCrystal, questDragon, questRescue])
+      result = pickVariant(prompt, [questCrystal, questDragon, questRescue])
+      break
     case "character":
-      return pickVariant(prompt, [charMira, charKael, charShadowMage])
+      result = pickVariant(prompt, [charMira, charKael, charShadowMage])
+      break
     case "item":
-      return pickVariant(prompt, [itemCrystal, itemBlade, itemMap])
+      result = pickVariant(prompt, [itemCrystal, itemBlade, itemMap])
+      break
     case "skill":
-      return pickVariant(prompt, [skillFireball, skillHeal, skillStealth])
+      result = pickVariant(prompt, [skillFireball, skillHeal, skillStealth])
+      break
     default:
-      return storyVillage
+      result = storyVillage
   }
+  return injectProjectContext(result, project)
 }
