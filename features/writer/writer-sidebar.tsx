@@ -10,8 +10,6 @@ interface WriterSidebarProps {
 }
 
 export function WriterSidebar({ activeCategory, onCategoryChange }: WriterSidebarProps) {
-  const items = categoryItems.filter((item) => item.category === activeCategory)
-
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-white/[0.06] bg-[#0c0c10]">
       {/* Logo */}
@@ -49,14 +47,16 @@ export function WriterSidebar({ activeCategory, onCategoryChange }: WriterSideba
           {categories.find((c) => c.id === activeCategory)?.label}
         </p>
         <div className="flex flex-col gap-0.5">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="rounded-lg px-3 py-2 text-sm text-white/25 transition-colors duration-200 hover:bg-white/[0.03] hover:text-white/40 cursor-default"
-            >
-              {item.label}
-            </div>
-          ))}
+          {categoryItems
+            .filter((item) => item.category === activeCategory)
+            .map((item) => (
+              <div
+                key={item.id}
+                className="rounded-lg px-3 py-2 text-sm text-white/25 transition-colors duration-200 hover:bg-white/[0.03] hover:text-white/40 cursor-default"
+              >
+                {item.label}
+              </div>
+            ))}
         </div>
       </div>
     </aside>

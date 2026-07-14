@@ -27,7 +27,7 @@ const ST = "#34d399"   // strings
 const NM = "#f59e0b"   // numbers
 const PR = "#e2e8f0"   // properties / plain text
 const PN = "#64748b"   // punctuation
-const _CM = "#475569"   // comments
+// const CM = "#475569"   // comments
 
 /* ------------------------------------------------------------------ */
 /*  Realistic game-dev code content                                    */

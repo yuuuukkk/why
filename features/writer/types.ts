@@ -1,10 +1,10 @@
 export type WriterCategory =
   | "story"
-  | "characters"
-  | "quests"
   | "dialogue"
-  | "items"
-  | "skills"
+  | "quest"
+  | "character"
+  | "item"
+  | "skill"
 
 export interface CategoryItem {
   id: string
@@ -23,4 +23,8 @@ export interface GeneratedContent {
 export interface MockPrompt {
   label: string
   text: string
+}
+
+export interface CategoryMock {
+  [key: string]: GeneratedContent
 }
