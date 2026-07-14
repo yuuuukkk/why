@@ -7,9 +7,11 @@ import type { WriterCategory } from "./types"
 interface WriterSidebarProps {
   activeCategory: WriterCategory
   onCategoryChange: (category: WriterCategory) => void
+  showHistory: boolean
+  onToggleHistory: () => void
 }
 
-export function WriterSidebar({ activeCategory, onCategoryChange }: WriterSidebarProps) {
+export function WriterSidebar({ activeCategory, onCategoryChange, showHistory, onToggleHistory }: WriterSidebarProps) {
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-white/[0.06] bg-[#0c0c10]">
       {/* Logo */}
@@ -25,10 +27,13 @@ export function WriterSidebar({ activeCategory, onCategoryChange }: WriterSideba
         {categories.map((cat) => (
           <button
             key={cat.id}
-            onClick={() => onCategoryChange(cat.id as WriterCategory)}
+            onClick={() => {
+              onCategoryChange(cat.id as WriterCategory)
+              if (showHistory) onToggleHistory()
+            }}
             className={cn(
               "rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors duration-200",
-              activeCategory === cat.id
+              !showHistory && activeCategory === cat.id
                 ? "bg-white/[0.06] text-white"
                 : "text-white/30 hover:bg-white/[0.03] hover:text-white/50"
             )}
@@ -41,23 +46,49 @@ export function WriterSidebar({ activeCategory, onCategoryChange }: WriterSideba
       {/* Divider */}
       <div className="mx-3 border-t border-white/[0.04]" />
 
-      {/* Category items */}
+      {/* History toggle */}
+      <div className="p-3">
+        <button
+          onClick={onToggleHistory}
+          className={cn(
+            "w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors duration-200",
+            showHistory
+              ? "bg-white/[0.06] text-white"
+              : "text-white/30 hover:bg-white/[0.03] hover:text-white/50"
+          )}
+        >
+          History
+        </button>
+      </div>
+
+      {/* Divider */}
+      <div className="mx-3 border-t border-white/[0.04]" />
+
+      {/* Category items or History placeholder */}
       <div className="flex-1 overflow-y-auto p-3">
-        <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-white/15">
-          {categories.find((c) => c.id === activeCategory)?.label}
-        </p>
-        <div className="flex flex-col gap-0.5">
-          {categoryItems
-            .filter((item) => item.category === activeCategory)
-            .map((item) => (
-              <div
-                key={item.id}
-                className="rounded-lg px-3 py-2 text-sm text-white/25 transition-colors duration-200 hover:bg-white/[0.03] hover:text-white/40 cursor-default"
-              >
-                {item.label}
-              </div>
-            ))}
-        </div>
+        {!showHistory ? (
+          <>
+            <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-white/15">
+              {categories.find((c) => c.id === activeCategory)?.label}
+            </p>
+            <div className="flex flex-col gap-0.5">
+              {categoryItems
+                .filter((item) => item.category === activeCategory)
+                .map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-lg px-3 py-2 text-sm text-white/25 transition-colors duration-200 hover:bg-white/[0.03] hover:text-white/40 cursor-default"
+                  >
+                    {item.label}
+                  </div>
+                ))}
+            </div>
+          </>
+        ) : (
+          <p className="px-3 text-sm text-white/20">
+            Select an item from History to view past generations.
+          </p>
+        )}
       </div>
     </aside>
   )

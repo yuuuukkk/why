@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { Container } from "@/components/ui/Container"
 import { Section } from "@/components/ui/Section"
 import { GridBackground } from "@/components/ui/GridBackground"
+import { WorkflowGenerator } from "@/features/workflow/workflow-generator"
 import { cn } from "@/lib/utils"
 
 const workflowSteps = [
@@ -265,9 +266,11 @@ const illustrations: Record<string, React.FC> = {
 function WorkflowNode({
   step,
   index,
+  onClick,
 }: {
   step: (typeof workflowSteps)[number]
   index: number
+  onClick?: () => void
 }) {
   const IllustrationComponent = illustrations[step.id]
 
@@ -284,8 +287,9 @@ function WorkflowNode({
       className="group relative flex flex-col"
     >
       <div
+        onClick={onClick}
         className={cn(
-          "flex w-full flex-col rounded-2xl border border-white/[0.06] bg-[#0d0d10] p-6 transition-all duration-200",
+          "flex w-full flex-col rounded-2xl border border-white/[0.06] bg-[#0d0d10] p-6 transition-all duration-200 cursor-pointer",
           "hover:-translate-y-1 hover:border-white/[0.15] hover:shadow-glow-sm"
         )}
       >
@@ -387,9 +391,12 @@ function Connector({
 /* ------------------------------------------------------------------ */
 
 export function WorkflowMap() {
+  const [activeStep, setActiveStep] = React.useState<string | null>(null)
+
   return (
     <Section className="overflow-hidden border-t border-white/[0.06]">
       <GridBackground cellSize={80} opacity={0.025} />
+      <WorkflowGenerator stepId={activeStep} onClose={() => setActiveStep(null)} />
 
       <Container>
         <div className="mx-auto max-w-5xl">
@@ -417,7 +424,7 @@ export function WorkflowMap() {
             {workflowSteps.map((step, index) => (
               <React.Fragment key={step.id}>
                 <div className="w-48 xl:w-56">
-                  <WorkflowNode step={step} index={index} />
+                  <WorkflowNode step={step} index={index} onClick={() => setActiveStep(step.id)} />
                 </div>
                 {index < workflowSteps.length - 1 && (
                   <Connector
@@ -441,7 +448,7 @@ export function WorkflowMap() {
             {workflowSteps.map((step, index) => (
               <React.Fragment key={step.id}>
                 <div className="w-full max-w-xs">
-                  <WorkflowNode step={step} index={index} />
+                  <WorkflowNode step={step} index={index} onClick={() => setActiveStep(step.id)} />
                 </div>
                 {index < workflowSteps.length - 1 && (
                   <Connector

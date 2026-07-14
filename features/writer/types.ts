@@ -25,6 +25,10 @@ export interface MockPrompt {
   text: string
 }
 
-export interface CategoryMock {
-  [key: string]: GeneratedContent
+export interface HistoryEntry {
+  id: string
+  timestamp: number
+  category: WriterCategory
+  prompt: string
+  result: GeneratedContent
 }

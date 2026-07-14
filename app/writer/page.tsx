@@ -5,23 +5,48 @@ import { Header } from "@/components/layout/header"
 import { WriterSidebar } from "@/features/writer/writer-sidebar"
 import { PromptEditor } from "@/features/writer/prompt-editor"
 import { ResultPanel } from "@/features/writer/result-panel"
-import { categoryMocks } from "@/features/writer/mock-data"
-import type { WriterCategory, GeneratedContent } from "@/features/writer/types"
+import { HistoryPanel } from "@/features/writer/history-panel"
+import { useHistory } from "@/features/writer/history"
+import { getMockResult } from "@/features/writer/mock-data"
+import type { WriterCategory, GeneratedContent, HistoryEntry } from "@/features/writer/types"
 
 export default function WriterPage() {
   const [activeCategory, setActiveCategory] = React.useState<WriterCategory>("story")
   const [prompt, setPrompt] = React.useState("")
   const [result, setResult] = React.useState<GeneratedContent | null>(null)
   const [isLoading, setIsLoading] = React.useState(false)
+  const [showHistory, setShowHistory] = React.useState(false)
+
+  const history = useHistory()
 
   const handleGenerate = React.useCallback(() => {
     if (!prompt.trim()) return
     setIsLoading(true)
     setTimeout(() => {
-      setResult(categoryMocks[activeCategory])
+      const generated = getMockResult(activeCategory, prompt)
+      setResult(generated)
+      history.add(activeCategory, prompt, generated)
       setIsLoading(false)
     }, 800)
-  }, [prompt, activeCategory])
+  }, [prompt, activeCategory, history])
+
+  const handleHistorySelect = React.useCallback((entry: HistoryEntry) => {
+    setActiveCategory(entry.category)
+    setPrompt(entry.prompt)
+    setResult(entry.result)
+    setShowHistory(false)
+  }, [])
+
+  const activePanel = showHistory ? (
+    <HistoryPanel
+      entries={history.entries}
+      onSelect={handleHistorySelect}
+      onDelete={history.remove}
+      onClear={history.clear}
+    />
+  ) : (
+    <ResultPanel result={result} />
+  )
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
@@ -35,6 +60,8 @@ export default function WriterPage() {
               setActiveCategory(cat)
               setResult(null)
             }}
+            showHistory={showHistory}
+            onToggleHistory={() => setShowHistory((s) => !s)}
           />
         </div>
 
@@ -46,9 +73,10 @@ export default function WriterPage() {
               onClick={() => {
                 setActiveCategory(cat as WriterCategory)
                 setResult(null)
+                setShowHistory(false)
               }}
               className={`shrink-0 rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
-                activeCategory === cat
+                activeCategory === cat && !showHistory
                   ? "bg-white/[0.06] text-white"
                   : "text-white/30 hover:text-white/50"
               }`}
@@ -56,6 +84,14 @@ export default function WriterPage() {
               {cat.charAt(0).toUpperCase() + cat.slice(1)}
             </button>
           ))}
+          <button
+            onClick={() => setShowHistory((s) => !s)}
+            className={`shrink-0 rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+              showHistory ? "bg-white/[0.06] text-white" : "text-white/30 hover:text-white/50"
+            }`}
+          >
+            History
+          </button>
         </div>
 
         <PromptEditor
@@ -65,18 +101,18 @@ export default function WriterPage() {
           isLoading={isLoading}
         />
 
-        {/* Result panel - full width on mobile, sidebar on desktop */}
+        {/* Result / History panel */}
         <div className="hidden lg:block">
-          <ResultPanel result={result} />
+          {activePanel}
         </div>
       </div>
 
-      {/* Mobile result overlay */}
-      {result && (
+      {/* Mobile overlay */}
+      {(result || showHistory) && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="flex-1 bg-black/50" onClick={() => setResult(null)} />
+          <div className="flex-1 bg-black/50" onClick={() => { setResult(null); setShowHistory(false) }} />
           <div className="w-80 max-w-[85vw]">
-            <ResultPanel result={result} />
+            {activePanel}
           </div>
         </div>
       )}
