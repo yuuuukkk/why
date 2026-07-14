@@ -13,6 +13,11 @@ const navItems = [
   { label: "About", href: "#about" },
 ]
 
+const toolItems = [
+  { label: "Writer", href: "/writer" },
+  { label: "Designer", href: "/designer" },
+]
+
 function GitHubIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -95,6 +100,19 @@ export function Header() {
               >
                 EN
               </button>
+            </div>
+
+            {/* Tool Links */}
+            <div className="hidden md:flex items-center gap-1 mr-2">
+              {toolItems.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-white/40 transition-colors hover:bg-white/[0.05] hover:text-white/70"
+                >
+                  {item.label}
+                </Link>
+              ))}
             </div>
 
             {/* GitHub Button */}

@@ -6,6 +6,7 @@ import type { Project, ProjectData, GenerationSettings, DEFAULT_SETTINGS } from 
 const PROJECTS_KEY = "why_projects"
 const ACTIVE_PROJECT_KEY = "why_active_project_id"
 const SETTINGS_KEY = "why_generation_settings"
+const GAMEPLAY_DESIGN_KEY = "why_gameplay_design"
 
 // ─── Projects ───
 
@@ -127,6 +128,102 @@ export function loadSettings(): GenerationSettings {
 export function saveSettings(settings: GenerationSettings) {
   if (typeof window === "undefined") return
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+}
+
+// ─── Gameplay Design ───
+
+export interface GameplayDesignEntry {
+  id: string
+  timestamp: number
+  category: string
+  prompt: string
+  result: { title: string; sections: { heading: string; body: string }[] }
+}
+
+function getGameplayDesignKey(projectId: string): string {
+  return `${GAMEPLAY_DESIGN_KEY}_${projectId}`
+}
+
+export function loadGameplayDesign(projectId: string): GameplayDesignEntry[] {
+  if (typeof window === "undefined") return []
+  try {
+    const raw = localStorage.getItem(getGameplayDesignKey(projectId))
+    return raw ? (JSON.parse(raw) as GameplayDesignEntry[]) : []
+  } catch {
+    return []
+  }
+}
+
+export function saveGameplayDesign(projectId: string, entries: GameplayDesignEntry[]) {
+  if (typeof window === "undefined") return
+  localStorage.setItem(getGameplayDesignKey(projectId), JSON.stringify(entries))
+}
+
+export function addGameplayDesign(
+  projectId: string,
+  category: string,
+  prompt: string,
+  result: { title: string; sections: { heading: string; body: string }[] }
+): GameplayDesignEntry {
+  const entry: GameplayDesignEntry = {
+    id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    timestamp: Date.now(),
+    category,
+    prompt,
+    result,
+  }
+  const existing = loadGameplayDesign(projectId)
+  const updated = [entry, ...existing].slice(0, 50)
+  saveGameplayDesign(projectId, updated)
+  return entry
+}
+
+export function deleteGameplayDesign(projectId: string, id: string) {
+  const updated = loadGameplayDesign(projectId).filter((e) => e.id !== id)
+  saveGameplayDesign(projectId, updated)
+}
+
+export function clearGameplayDesign(projectId: string) {
+  saveGameplayDesign(projectId, [])
+}
+
+export function useGameplayDesign(projectId: string | null) {
+  const [entries, setEntries] = React.useState<GameplayDesignEntry[]>([])
+
+  React.useEffect(() => {
+    if (projectId) {
+      setEntries(loadGameplayDesign(projectId))
+    } else {
+      setEntries([])
+    }
+  }, [projectId])
+
+  const add = React.useCallback(
+    (category: string, prompt: string, result: { title: string; sections: { heading: string; body: string }[] }) => {
+      if (!projectId) return null
+      const entry = addGameplayDesign(projectId, category, prompt, result)
+      setEntries((prev) => [entry, ...prev].slice(0, 50))
+      return entry
+    },
+    [projectId]
+  )
+
+  const remove = React.useCallback(
+    (id: string) => {
+      if (!projectId) return
+      deleteGameplayDesign(projectId, id)
+      setEntries((prev) => prev.filter((e) => e.id !== id))
+    },
+    [projectId]
+  )
+
+  const clear = React.useCallback(() => {
+    if (!projectId) return
+    clearGameplayDesign(projectId)
+    setEntries([])
+  }, [projectId])
+
+  return { entries, add, remove, clear }
 }
 
 // ─── React Hooks ───

@@ -8,15 +8,17 @@ interface PromptEditorProps {
   onPromptChange: (value: string) => void
   onGenerate: () => void
   isLoading: boolean
+  examples?: { label: string; text: string }[]
+  subtitle?: string
 }
 
-export function PromptEditor({ prompt, onPromptChange, onGenerate, isLoading }: PromptEditorProps) {
+export function PromptEditor({ prompt, onPromptChange, onGenerate, isLoading, examples, subtitle }: PromptEditorProps) {
   return (
     <div className="flex flex-1 flex-col bg-background">
       {/* Top bar */}
       <div className="flex h-14 items-center justify-between border-b border-white/[0.06] px-6">
         <h2 className="text-sm font-medium text-white/60">Prompt Editor</h2>
-        <span className="text-xs text-white/20">AI Writer</span>
+        <span className="text-xs text-white/20">{subtitle ?? "AI Writer"}</span>
       </div>
 
       {/* Prompt area */}
@@ -34,7 +36,7 @@ export function PromptEditor({ prompt, onPromptChange, onGenerate, isLoading }: 
             Try an example
           </p>
           <div className="flex flex-wrap gap-2">
-            {examplePrompts.map((ep) => (
+            {(examples ?? examplePrompts).map((ep) => (
               <button
                 key={ep.label}
                 onClick={() => onPromptChange(ep.text)}
