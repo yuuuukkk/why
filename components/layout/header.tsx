@@ -16,6 +16,7 @@ const navItems = [
 const toolItems = [
   { label: "Writer", href: "/writer" },
   { label: "Designer", href: "/designer" },
+  { label: "Assets", href: "/assets" },
 ]
 
 function GitHubIcon({ className }: { className?: string }) {

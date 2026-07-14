@@ -7,6 +7,7 @@ const PROJECTS_KEY = "why_projects"
 const ACTIVE_PROJECT_KEY = "why_active_project_id"
 const SETTINGS_KEY = "why_generation_settings"
 const GAMEPLAY_DESIGN_KEY = "why_gameplay_design"
+const ASSETS_KEY = "why_assets"
 
 // ─── Projects ───
 
@@ -220,6 +221,102 @@ export function useGameplayDesign(projectId: string | null) {
   const clear = React.useCallback(() => {
     if (!projectId) return
     clearGameplayDesign(projectId)
+    setEntries([])
+  }, [projectId])
+
+  return { entries, add, remove, clear }
+}
+
+// ─── Assets ───
+
+export interface AssetEntry {
+  id: string
+  timestamp: number
+  category: string
+  prompt: string
+  result: { title: string; sections: { heading: string; body: string }[] }
+}
+
+function getAssetsKey(projectId: string): string {
+  return `${ASSETS_KEY}_${projectId}`
+}
+
+export function loadAssets(projectId: string): AssetEntry[] {
+  if (typeof window === "undefined") return []
+  try {
+    const raw = localStorage.getItem(getAssetsKey(projectId))
+    return raw ? (JSON.parse(raw) as AssetEntry[]) : []
+  } catch {
+    return []
+  }
+}
+
+export function saveAssets(projectId: string, entries: AssetEntry[]) {
+  if (typeof window === "undefined") return
+  localStorage.setItem(getAssetsKey(projectId), JSON.stringify(entries))
+}
+
+export function addAsset(
+  projectId: string,
+  category: string,
+  prompt: string,
+  result: { title: string; sections: { heading: string; body: string }[] }
+): AssetEntry {
+  const entry: AssetEntry = {
+    id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    timestamp: Date.now(),
+    category,
+    prompt,
+    result,
+  }
+  const existing = loadAssets(projectId)
+  const updated = [entry, ...existing].slice(0, 50)
+  saveAssets(projectId, updated)
+  return entry
+}
+
+export function deleteAsset(projectId: string, id: string) {
+  const updated = loadAssets(projectId).filter((e) => e.id !== id)
+  saveAssets(projectId, updated)
+}
+
+export function clearAssets(projectId: string) {
+  saveAssets(projectId, [])
+}
+
+export function useAssets(projectId: string | null) {
+  const [entries, setEntries] = React.useState<AssetEntry[]>([])
+
+  React.useEffect(() => {
+    if (projectId) {
+      setEntries(loadAssets(projectId))
+    } else {
+      setEntries([])
+    }
+  }, [projectId])
+
+  const add = React.useCallback(
+    (category: string, prompt: string, result: { title: string; sections: { heading: string; body: string }[] }) => {
+      if (!projectId) return null
+      const entry = addAsset(projectId, category, prompt, result)
+      setEntries((prev) => [entry, ...prev].slice(0, 50))
+      return entry
+    },
+    [projectId]
+  )
+
+  const remove = React.useCallback(
+    (id: string) => {
+      if (!projectId) return
+      deleteAsset(projectId, id)
+      setEntries((prev) => prev.filter((e) => e.id !== id))
+    },
+    [projectId]
+  )
+
+  const clear = React.useCallback(() => {
+    if (!projectId) return
+    clearAssets(projectId)
     setEntries([])
   }, [projectId])
 
